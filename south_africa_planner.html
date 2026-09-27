@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voyageur — Vacation Activity Planner</title>
+  
+  <!-- Tailwind CSS for modern utility styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Elegant Google Fonts: Playfair Display for headers, Plus Jakarta Sans for UI text -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght=0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght=300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            serif: ['"Playfair Display"', 'serif'],
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style>
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    
+    /* Elegant soft grid lines & drop states */
+    .slot-drag-hover {
+      background-color: #f1f5f9 !important;
+      border-color: #6366f1 !important;
+    }
+    
+    /* Smooth transitions for high-end look */
+    .transition-all-200 {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  </style>
+</head>
+<body class="bg-[#fafaf9] text-slate-800 font-sans min-h-screen flex flex-col antialiased">
+
+  <!-- ================= TOP HEADER ================= -->
+  <header class="border-b border-stone-200 bg-white/80 backdrop-blur-md sticky top-0 z-30 px-6 py-4">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+      
+      <!-- Brand & Date Display -->
+      <div class="flex items-center gap-4">
+        <div class="bg-indigo-600 text-white p-2.5 rounded-xl shadow-md shadow-indigo-100">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2 group/title">
+            <h1 class="font-serif text-2xl font-bold tracking-tight text-stone-900" id="trip-name-display">Voyageur</h1>
+            <button onclick="openModal('trip-name-modal')" class="p-1 rounded-md text-stone-400 hover:text-indigo-600 hover:bg-indigo-50 transition duration-150" title="Edit Trip Name">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+            </button>
+          </div>
+          <p class="text-xs text-stone-500 font-medium uppercase tracking-widest" id="trip-date-range-display">Loading Dates...</p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center gap-3">
+        <!-- Date Selector Button -->
+        <button onclick="openModal('dates-modal')" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-white text-stone-700 border border-stone-200 rounded-lg hover:bg-stone-50 active:scale-95 transition-all-200 shadow-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-stone-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          Set Trip Dates
+        </button>
+
+        <!-- Save Config Button -->
+        <button onclick="saveItinerary()" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 active:scale-95 transition-all-200 shadow-sm shadow-emerald-100">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+          </svg>
+          Save Plan
+        </button>
+
+        <!-- Export Button -->
+        <button onclick="exportItinerary()" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-white text-stone-700 border border-stone-200 rounded-lg hover:bg-stone-50 active:scale-95 transition-all-200 shadow-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-stone-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Export
+        </button>
+
+        <!-- Import Button -->
+        <button onclick="openModal('import-modal')" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-indigo-50 text-indigo-700 border border-indigo-150 rounded-lg hover:bg-indigo-100 active:scale-95 transition-all-200 shadow-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          Import
+        </button>
+
+        <!-- Reset Button -->
+        <button onclick="confirmReset()" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-white text-rose-600 border border-rose-100 rounded-lg hover:bg-rose-50 active:scale-95 transition-all-200">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          Reset
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ================= ACTIVE PLACEMENT BANNER (Mobile/Touch Assist) ================= -->
+  <div id="placement-banner" class="hidden bg-indigo-50 border-y border-indigo-100 py-3 px-6 sticky top-[73px] z-20 shadow-sm">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <span class="animate-pulse inline-block w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+        <p class="text-sm font-medium text-indigo-900" id="placement-banner-text">
+          Tap on an hour slot in the calendar to place your selected activity.
+        </p>
+      </div>
+      <button onclick="cancelPlacement()" class="text-xs font-semibold uppercase tracking-wider text-indigo-600 hover:text-indigo-800 bg-white border border-indigo-200 px-3 py-1 rounded-md">
+        Cancel
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= MAIN WORKSPACE ================= -->
+  <main class="max-w-7xl mx-auto px-4 md:px-6 py-8 flex-1 w-full flex flex-col lg:flex-row gap-8">
+    
+    <!-- LEFT SIDEBAR: STICKY ACTIVITY POOL & CREATOR -->
+    <section class="w-full lg:w-80 flex-shrink-0 flex flex-col gap-6">
+      
+      <!-- Creator Box -->
+      <div class="bg-white rounded-2xl border border-stone-200/80 p-6 shadow-sm">
+        <h2 class="text-lg font-serif font-bold text-stone-900 mb-4 flex items-center justify-between">
+          <span>Activities Pool</span>
+          <span class="text-xs font-sans font-normal text-stone-400 bg-stone-100 px-2.5 py-1 rounded-full" id="pool-count">0 Ideas</span>
+        </h2>
+        
+        <p class="text-xs text-stone-500 mb-5 leading-relaxed">
+          Create sticky notes of planned activities. Drag them onto the calendar grid, or click one to trigger mobile placement mode.
+        </p>
+
+        <button onclick="openModal('activity-modal')" class="w-full inline-flex justify-center items-center gap-2 px-4 py-3 bg-stone-900 text-white font-medium text-sm rounded-xl hover:bg-stone-800 active:scale-95 transition-all-200 shadow-md">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Add New Activity
+        </button>
+      </div>
+
+      <!-- Scrollable Sticky Note Container -->
+      <div class="flex-1 min-h-[300px] border border-stone-200/50 bg-stone-50/50 rounded-2xl p-4 flex flex-col gap-4 overflow-y-auto max-h-[600px] lg:max-h-[calc(100vh-340px)]"
+           id="activity-pool" 
+           ondragover="allowDrop(event)" 
+           ondrop="handlePoolDrop(event)">
+        <!-- Sticky notes will dynamic inject here -->
+      </div>
+      
+    </section>
+
+    <!-- RIGHT GRID: THE TRIP ITINERARY SCHEDULE -->
+    <section class="flex-1 flex flex-col">
+      <div class="bg-white rounded-2xl border border-stone-200/80 shadow-sm overflow-hidden flex flex-col h-full">
+        
+        <!-- Interactive Controls / Legend Bar -->
+        <div class="border-b border-stone-100 bg-stone-50/50 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <span class="text-sm font-semibold text-stone-700">Daily Schedule (08:00 AM - 10:00 PM)</span>
+          <div class="flex items-center gap-4 text-xs font-medium text-stone-500">
+            <span class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#bbf7d0] border border-emerald-300"></span> Sightseeing
+            </span>
+            <span class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#bfdbfe] border border-blue-300"></span> Transport
+            </span>
+            <span class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#fef08a] border border-amber-300"></span> Dining
+            </span>
+          </div>
+        </div>
+
+        <!-- Horizontal Scroll Area for Days -->
+        <div class="p-6 overflow-x-auto">
+          <div class="flex gap-4 min-w-[700px]" id="days-container">
+            <!-- Dynamic days cards inject here -->
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= MODAL: TRIP DATE CHANGER ================= -->
+  <div id="dates-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end sm:items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      
+      <!-- Background Overlay -->
+      <div onclick="closeModal('dates-modal')" class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm transition-opacity" aria-hidden="true"></div>
+
+      <!-- Centered Modal Content -->
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+      <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full border border-stone-200">
+        <div class="bg-white px-6 pt-6 pb-4">
+          <div class="sm:flex sm:items-start">
+            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-indigo-50 sm:mx-0 sm:h-10 sm:w-10">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+              <h3 class="text-lg leading-6 font-serif font-bold text-stone-900" id="modal-title">Select Trip Dates</h3>
+              <div class="mt-2">
+                <p class="text-sm text-stone-500">Plan your journey by choosing start and end dates. Activities scheduled outside these dates will be cleaned safely.</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Form Fields -->
+          <div class="mt-5 space-y-4">
+            <div>
+              <label for="start-date-input" class="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-1">Trip Starts</label>
+              <input type="date" id="start-date-input" class="w-full px-3 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
+            </div>
+            <div>
+              <label for="end-date-input" class="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-1">Trip Ends</label>
+              <input type="date" id="end-date-input" class="w-full px-3 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
+            </div>
+            <p id="date-validation-error" class="text-rose-600 text-xs font-medium hidden">End date cannot be earlier than start date!</p>
+          </div>
+        </div>
+
+        <div class="bg-stone-50 px-6 py-4 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
+          <button onclick="applyDates()" type="button" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 sm:ml-3 sm:w-auto sm:text-sm">
+            Apply Dates
+          </button>
+          <button onclick="closeModal('dates-modal')" type="button" class="mt-3 w-full inline-flex justify-center rounded-lg border border-stone-200 shadow-sm px-4 py-2 bg-white text-base font-medium text-stone-700 hover:bg-stone-50 sm:mt-0 sm:w-auto sm:text-sm">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: CREATE / EDIT ACTIVITY ================= -->
+  <div id="activity-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end sm:items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      
+      <!-- Background Overlay -->
+      <div onclick="closeModal('activity-modal')" class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm transition-opacity" aria-hidden="true"></div>
+
+      <!-- Centered Modal Content -->
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+      <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full border border-stone-200">
+        
+        <!-- Header -->
+        <div class="bg-white px-6 pt-6 pb-4">
+          <div class="sm:flex sm:items-start">
+            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-stone-100 sm:mx-0 sm:h-10 sm:w-10">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-stone-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+            </div>
+            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+              <h3 class="text-lg leading-6 font-serif font-bold text-stone-900" id="activity-modal-title">Create Activity</h3>
+              <div class="mt-2">
+                <p class="text-sm text-stone-500">Design your activity card. Place it anytime on your travel map.</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Hidden inputs for tracking edits -->
+          <input type="hidden" id="edit-activity-id" value="">
+
+          <!-- Form Fields -->
+          <div class="mt-5 space-y-4">
+            <!-- Name -->
+            <div>
+              <label for="act-name-input" class="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-1">Activity Name</label>
+              <input type="text" id="act-name-input" placeholder="e.g., Museum of Fine Arts" class="w-full px-3 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
+              <p id="act-name-error" class="text-rose-600 text-xs font-medium mt-1 hidden">Activity name is required!</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <!-- Duration -->
+              <div>
+                <label for="act-duration-input" class="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-1">Duration (Hours)</label>
+                <select id="act-duration-input" class="w-full px-3 py-2 border border-stone-200 rounded-lg text-sm bg-white focus:outline-none focus:border-indigo-500">
+                  <option value="1" selected>1 Hour</option>
+                  <option value="2">2 Hours</option>
+                  <option value="3">3 Hours</option>
+                  <option value="4">4 Hours</option>
+                  <option value="5">5 Hours</option>
+                  <option value="6">6 Hours</option>
+                </select>
+              </div>
+
+              <!-- Theme Color -->
+              <div>
+                <label for="act-color-input" class="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-1">Category / Theme</label>
+                <select id="act-color-input" class="w-full px-3 py-2 border border-stone-200 rounded-lg text-sm bg-white focus:outline-none focus:border-indigo-500">
+                  <option value="sightseeing" selected>Sightseeing (Soft Mint)</option>
+                  <option value="transport">Transport (Ice Blue)</option>
+                  <option value="dining">Dining (Warm Yellow)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div>
+              <label for="act-notes-input" class="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-1">Notes (Optional)</label>
+              <textarea id="act-notes-input" rows="3" placeholder="Confirmation numbers, address, or travel details..." class="w-full px-3 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:border-indigo-500 resize-none"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer actions -->
+        <div class="bg-stone-50 px-6 py-4 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
+          <button onclick="saveActivity()" type="button" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-stone-900 text-base font-medium text-white hover:bg-stone-800 sm:ml-3 sm:w-auto sm:text-sm">
+            Save Card
+          </button>
+          <button onclick="closeModal('activity-modal')" type="button" class="mt-3 w-full inline-flex justify-center rounded-lg border border-stone-200 shadow-sm px-4 py-2 bg-white text-base font-medium text-stone-700 hover:bg-stone-50 sm:mt-0 sm:w-auto sm:text-sm">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= NOTIFICATIONS / TOAST MECHANISM ================= -->
+  <div id="toast" class="opacity-0 translate-y-4 pointer-events-none fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-stone-900 text-white px-5 py-3.5 rounded-xl shadow-lg transition-all duration-300">
+    <span class="text-emerald-400 font-semibold" id="toast-icon">✓</span>
+    <span class="text-sm font-medium" id="toast-message">Configuration Saved!</span>
+  </div>
+
+  <!-- ================= CUSTOM DIALOG FOR ALERTS ================= -->
+  <div id="confirm-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end sm:items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div onclick="closeModal('confirm-modal')" class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm transition-opacity" aria-hidden="true"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+      <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full border border-stone-200">
+        <div class="bg-white px-6 pt-6 pb-4">
+          <div class="sm:flex sm:items-start">
+            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-rose-50 sm:mx-0 sm:h-10 sm:w-10">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+              <h3 class="text-lg leading-6 font-serif font-bold text-stone-900" id="confirm-modal-title">Reset Plan?</h3>
+              <div class="mt-2">
+                <p class="text-sm text-stone-500" id="confirm-modal-description">This will clear your calendar schedule and reset all items to default. This process cannot be undone.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-stone-50 px-6 py-4 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
+          <button id="confirm-modal-action-btn" type="button" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-rose-600 text-base font-medium text-white hover:bg-rose-700 sm:ml-3 sm:w-auto sm:text-sm">
+            Reset Everything
+          </button>
+          <button onclick="closeModal('confirm-modal')" type="button" class="mt-3 w-full inline-flex justify-center rounded-lg border border-stone-200 shadow-sm px-4 py-2 bg-white text-base font-medium text-stone-700 hover:bg-stone-50 sm:mt-0 sm:w-auto sm:text-sm">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: TRIP NAME CHANGER ================= -->
+  <div id="trip-name-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+    <div class="flex items-end sm:items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div onclick="closeModal('trip-name-modal')" class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm transition-opacity"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+      <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full border border-stone-200">
+        <div class="bg-white px-6 pt-6 pb-4">
+          <div class="sm:flex sm:items-start">
+            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-indigo-50 sm:mx-0 sm:h-10 sm:w-10">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </div>
+            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+              <h3 class="text-lg leading-6 font-serif font-bold text-stone-900">Change Trip Name</h3>
+              <p class="text-sm text-stone-500 mt-1">Provide a custom title for your holiday plan itinerary.</p>
+            </div>
+          </div>
+          <div class="mt-5">
+            <label for="trip-name-input" class="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-1">Trip Name</label>
+            <input type="text" id="trip-name-input" class="w-full px-3 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:border-indigo-500" placeholder="e.g., Summer in Paris">
+          </div>
+        </div>
+        <div class="bg-stone-50 px-6 py-4 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
+          <button onclick="applyTripName()" type="button" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 sm:ml-3 sm:w-auto sm:text-sm">
+            Apply Name
+          </button>
+          <button onclick="closeModal('trip-name-modal')" type="button" class="mt-3 w-full inline-flex justify-center rounded-lg border border-stone-200 shadow-sm px-4 py-2 bg-white text-base font-medium text-stone-700 hover:bg-stone-50 sm:mt-0 sm:w-auto sm:text-sm">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: IMPORT PLAN ================= -->
+  <div id="import-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+    <div class="flex items-end sm:items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div onclick="closeModal('import-modal')" class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm transition-opacity"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+      <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-stone-200">
+        <div class="bg-white px-6 pt-6 pb-4">
+          <div class="sm:flex sm:items-start">
+            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-indigo-50 sm:mx-0 sm:h-10 sm:w-10">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+            </div>
+            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+              <h3 class="text-lg leading-6 font-serif font-bold text-stone-900">Import Itinerary</h3>
+              <p class="text-sm text-stone-500 mt-1">Upload a previously saved itinerary file (`.json`) or paste the JSON text directly.</p>
+            </div>
+          </div>
+          <div class="mt-5 space-y-4">
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-1">Option A: Upload .json File</label>
+              <input type="file" id="import-file-input" accept=".json" class="block w-full text-sm text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+            </div>
+            <div class="relative flex py-1 items-center">
+              <div class="flex-grow border-t border-stone-200"></div>
+              <span class="flex-shrink mx-4 text-stone-400 text-xs uppercase tracking-wider font-semibold">or</span>
+              <div class="flex-grow border-t border-stone-200"></div>
+            </div>
+            <div>
+              <label for="import-text-input" class="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-1">Option B: Paste JSON Data</label>
+              <textarea id="import-text-input" rows="4" placeholder='{"tripName":"...","startDate":"...","endDate":"...", "activities":[], "schedule":[]}' class="w-full px-3 py-2 border border-stone-200 rounded-lg text-xs font-mono focus:outline-none focus:border-indigo-500 resize-none"></textarea>
+            </div>
+            <p id="import-error-msg" class="text-rose-600 text-xs font-medium hidden">Invalid JSON itinerary format! Please ensure dates and lists are correct.</p>
+          </div>
+        </div>
+        <div class="bg-stone-50 px-6 py-4 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
+          <button onclick="handleImport()" type="button" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 sm:ml-3 sm:w-auto sm:text-sm">
+            Import Plan
+          </button>
+          <button onclick="closeModal('import-modal')" type="button" class="mt-3 w-full inline-flex justify-center rounded-lg border border-stone-200 shadow-sm px-4 py-2 bg-white text-base font-medium text-stone-700 hover:bg-stone-50 sm:mt-0 sm:w-auto sm:text-sm">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= JAVASCRIPT WORKFLOW ================= -->
+  <script>
+    // --- STYLING CONSTANTS & COLORS ---
+    const THEMES = {
+      sightseeing: {
+        bg: 'bg-emerald-100',
+        border: 'border-emerald-300',
+        text: 'text-emerald-900',
+        tagBg: 'bg-emerald-200/60',
+        tagText: 'text-emerald-950',
+        accent: 'border-l-4 border-l-emerald-500'
+      },
+      transport: {
+        bg: 'bg-sky-100',
+        border: 'border-sky-300',
+        text: 'text-sky-900',
+        tagBg: 'bg-sky-200/60',
+        tagText: 'text-sky-950',
+        accent: 'border-l-4 border-l-sky-500'
+      },
+      dining: {
+        bg: 'bg-amber-100',
+        border: 'border-amber-300',
+        text: 'text-amber-900',
+        tagBg: 'bg-amber-200/60',
+        tagText: 'text-amber-950',
+        accent: 'border-l-4 border-l-amber-500'
+      }
+    };
+
+    // --- GLOBAL APPLICATION STATE ---
+    let state = {
+      tripName: "Voyageur Itinerary",
+      startDate: "", // YYYY-MM-DD
+      endDate: "",   // YYYY-MM-DD
+      activities: [], // Array of template activities { id, name, duration, notes, color }
+      schedule: []    // Array of placed items { id, activityId, dateStr, startHour }
+    };
+
+    // Tracks current action context
+    let activePlacementId = null; // Stays active when an activity is tapped for placing on touch devices
+    let currentlyDraggingId = null; // Dragged template activity or placed ID
+    let isDraggingFromCalendar = false; // Distinguishes between scheduling a new event or moving/rescheduling an existing one
+
+    // Standard hours block configuration: 08:00 to 22:00 (14 hours block)
+    const DAY_START_HOUR = 8;
+    const DAY_END_HOUR = 22;
+
+    // --- INITIALIZATION ---
+    window.addEventListener('DOMContentLoaded', () => {
+      // Load saved state or set intelligent defaults
+      const saved = localStorage.getItem('voyageur_planner_state');
+      if (saved) {
+        try {
+          state = JSON.parse(saved);
+          if (!state.tripName) state.tripName = "Voyageur Itinerary";
+          validateScheduleIntegrity();
+        } catch (e) {
+          loadDefaultState();
+        }
+      } else {
+        loadDefaultState();
+      }
+      
+      renderAll();
+    });
+
+    // Setup initial defaults: 5-day trip starting today, and "Go for a walk" default activity
+    function loadDefaultState() {
+      const today = new Date();
+      const futureDate = new Date();
+      futureDate.setDate(today.getDate() + 4); // 5-day span
+
+      state.tripName = "Voyageur Itinerary";
+      state.startDate = formatDate(today);
+      state.endDate = formatDate(futureDate);
+
+      // Default Walk activity
+      const defaultId = generateUUID();
+      state.activities = [
+        {
+          id: defaultId,
+          name: "Go for a walk",
+          duration: 1,
+          notes: "Leisurely stroll through local streets, grab a coffee, and check out some architectural views.",
+          color: "sightseeing"
+        }
+      ];
+
+      // Schedule default walk on Day 1 at 9:00 AM
+      state.schedule = [
+        {
+          id: generateUUID(),
+          activityId: defaultId,
+          dateStr: state.startDate,
+          startHour: 9
+        }
+      ];
+    }
+
+    // Safely remove any placed activities where the parent activity card or scheduled date has been deleted/changed
+    function validateScheduleIntegrity() {
+      const validActivityIds = new Set(state.activities.map(a => a.id));
+      const tripDates = getDaysRange();
+      const validDates = new Set(tripDates.map(d => d.dateStr));
+
+      state.schedule = state.schedule.filter(item => 
+        validActivityIds.has(item.activityId) && validDates.has(item.dateStr)
+      );
+    }
+
+    // --- RENDER CORE ---
+    function renderAll() {
+      // Render Trip Title
+      document.getElementById('trip-name-display').textContent = state.tripName || "Voyageur Itinerary";
+
+      // Render dates on Header
+      const days = getDaysRange();
+      const startText = parseAndFormatDate(state.startDate);
+      const endText = parseAndFormatDate(state.endDate);
+      document.getElementById('trip-date-range-display').textContent = `${startText} — ${endText} (${days.length} Days)`;
+
+      // Render activities pool
+      renderActivityPool();
+
+      // Render schedule grid
+      renderScheduleGrid();
+    }
+
+    // --- STREAMING_CHUNK: Filtering Out Scheduled Activities and Rendering Pool ---
+    // Render Sticky Notes Pool on the left (hiding any already scheduled activities)
+    function renderActivityPool() {
+      const poolEl = document.getElementById('activity-pool');
+      poolEl.innerHTML = "";
+
+      // Find the set of all activities currently scheduled
+      const scheduledIds = new Set(state.schedule.map(s => s.activityId));
+      
+      // Filter activities to only include ones that are NOT currently scheduled
+      const availableActivities = state.activities.filter(act => !scheduledIds.has(act.id));
+
+      document.getElementById('pool-count').textContent = `${availableActivities.length} ${availableActivities.length === 1 ? 'Idea Available' : 'Ideas Available'}`;
+
+      if (availableActivities.length === 0) {
+        poolEl.innerHTML = `
+          <div class="flex flex-col items-center justify-center py-12 px-4 text-center border-2 border-dashed border-stone-200 rounded-xl">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-stone-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span class="text-xs font-medium text-stone-500">All created pool activities have been placed on your itinerary map. Drag them back here to unschedule them.</span>
+          </div>
+        `;
+        return;
+      }
+
+      availableActivities.forEach(act => {
+        const theme = THEMES[act.color] || THEMES.active;
+        const activeClass = (activePlacementId === act.id) ? 'ring-4 ring-indigo-500 scale-[1.02] shadow-md' : 'shadow-sm';
+
+        const note = document.createElement('div');
+        note.className = `group relative p-4 rounded-xl border ${theme.bg} ${theme.border} ${theme.text} ${theme.accent} ${activeClass} cursor-grab active:cursor-grabbing transition-all-200`;
+        note.setAttribute('draggable', 'true');
+        
+        // Setup Drag & Drop listeners
+        note.addEventListener('dragstart', (e) => handleDragStart(e, act.id, false));
+        note.addEventListener('dragend', handleDragEnd);
+        
+        // Tap to select / place workflow for touch devices
+        note.addEventListener('click', () => triggerPlacementMode(act.id));
+
+        note.innerHTML = `
+          <div class="flex items-start justify-between gap-2 mb-2">
+            <h4 class="font-serif font-bold text-stone-900 group-hover:underline text-sm leading-tight">${escapeHTML(act.name)}</h4>
+            <div class="flex items-center gap-1.5 flex-shrink-0">
+              <button onclick="event.stopPropagation(); openEditActivity('${act.id}')" title="Edit Activity" class="p-1 rounded-md text-stone-500 hover:text-stone-950 hover:bg-stone-50/50 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                </svg>
+              </button>
+              <button onclick="event.stopPropagation(); deleteActivity('${act.id}')" title="Delete Activity" class="p-1 rounded-md text-stone-500 hover:text-rose-600 hover:bg-stone-50/50 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          ${act.notes ? `<p class="text-xs text-stone-700/80 mb-3 line-clamp-2">${escapeHTML(act.notes)}</p>` : ''}
+          
+          <div class="flex items-center justify-between">
+            <span class="inline-block px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase rounded-md ${theme.tagBg} ${theme.tagText}">
+              ${act.duration} ${act.duration === 1 ? 'Hour' : 'Hours'}
+            </span>
+            <span class="text-[10px] text-stone-400 group-hover:opacity-100 opacity-0 transition duration-150 hidden sm:inline">
+              Drag or Tap
+            </span>
+          </div>
+        `;
+        poolEl.appendChild(note);
+      });
+    }
+
+    // --- STREAMING_CHUNK: Processing Calendar Render and Multi-Hour Heights ---
+    // Render dynamic columns for each day in the trip range
+    function renderScheduleGrid() {
+      const container = document.getElementById('days-container');
+      container.innerHTML = "";
+
+      const days = getDaysRange();
+      
+      days.forEach((day, dayIndex) => {
+        const dayCard = document.createElement('div');
+        dayCard.className = "flex-1 min-w-[240px] max-w-[320px] bg-white border border-stone-200 rounded-xl shadow-sm flex flex-col";
+        
+        // Header info of day
+        dayCard.innerHTML = `
+          <div class="bg-stone-50 border-b border-stone-200 p-4 rounded-t-xl">
+            <h3 class="font-serif font-bold text-stone-900 text-base leading-tight">Day ${dayIndex + 1}</h3>
+            <p class="text-xs text-stone-500 font-medium">${day.dayName}, ${day.formattedDate}</p>
+          </div>
+          <div class="p-3 flex flex-col gap-1.5 flex-grow" id="day-grid-${day.dateStr}">
+            <!-- Hours list dynamic injection -->
+          </div>
+        `;
+        container.appendChild(dayCard);
+
+        const gridEl = document.getElementById(`day-grid-${day.dateStr}`);
+        
+        // Render slots hour by hour
+        for (let hour = DAY_START_HOUR; hour <= DAY_END_HOUR; hour++) {
+          // See if an activity starts at this hour, or if we are currently covered by a spanning multi-hour activity
+          const scheduleItem = getScheduledItemAt(day.dateStr, hour);
+          
+          if (scheduleItem) {
+            // If an activity starts exactly at this hour, we render its card.
+            if (scheduleItem.startHour === hour) {
+              const act = state.activities.find(a => a.id === scheduleItem.activityId);
+              if (act) {
+                const theme = THEMES[act.color] || THEMES.active;
+                
+                // Calculate height dynamically. Span multiple slots.
+                const slotHeight = 64; // Approximated heights of standard slot cards including gap margins
+                const cardHeight = act.duration * slotHeight - (act.duration - 1) * 6; // Spanning height minus gaps
+                
+                const card = document.createElement('div');
+                card.className = `relative p-3 rounded-lg border ${theme.bg} ${theme.border} ${theme.accent} ${theme.text} text-xs shadow-sm flex flex-col justify-between cursor-grab transition duration-150`;
+                card.style.minHeight = `${cardHeight}px`;
+                card.setAttribute('draggable', 'true');
+                
+                // Track dragging placed card to move it
+                card.addEventListener('dragstart', (e) => handleDragStart(e, scheduleItem.id, true));
+                card.addEventListener('dragend', handleDragEnd);
+
+                card.innerHTML = `
+                  <div class="flex items-start justify-between gap-1.5 mb-1">
+                    <div class="font-bold font-serif leading-tight line-clamp-2 text-stone-900">
+                      ${escapeHTML(act.name)}
+                    </div>
+                    <button onclick="unscheduleItem('${scheduleItem.id}')" title="Remove schedule" class="text-stone-400 hover:text-stone-900 hover:bg-white/40 p-1 rounded transition flex-shrink-0">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  
+                  <div class="text-[10px] text-stone-600 font-medium mb-1.5">
+                    ${formatHourLabel(hour)} — ${formatHourLabel(hour + act.duration)} (${act.duration}h)
+                  </div>
+                  
+                  ${act.notes ? `<p class="text-[10px] text-stone-700 leading-snug line-clamp-2 mt-auto italic bg-white/20 p-1 rounded">${escapeHTML(act.notes)}</p>` : ''}
+                `;
+                
+                gridEl.appendChild(card);
+                
+                // Skip rendering subsequent slots spanned by this activity
+                hour += (act.duration - 1);
+                continue;
+              }
+            }
+          }
+
+          // Render empty hour slots with dynamic labels
+          const emptySlot = document.createElement('div');
+          emptySlot.className = "group flex items-center gap-3 p-2.5 rounded-lg border border-dashed border-stone-200/60 bg-white hover:border-indigo-400 hover:bg-stone-50/50 transition duration-150 cursor-pointer min-h-[58px]";
+          
+          emptySlot.setAttribute('data-date', day.dateStr);
+          emptySlot.setAttribute('data-hour', hour);
+          
+          // Drag and Drop targets
+          emptySlot.addEventListener('dragover', (e) => handleDragOver(e, day.dateStr, hour));
+          emptySlot.addEventListener('dragleave', (e) => handleDragLeave(e));
+          emptySlot.addEventListener('drop', (e) => handleDrop(e, day.dateStr, hour));
+          
+          // Click handler for tap-to-place workflow
+          emptySlot.addEventListener('click', () => handleSlotClick(day.dateStr, hour));
+
+          emptySlot.innerHTML = `
+            <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block w-14 border-r border-stone-100 flex-shrink-0">${formatHourLabel(hour)}</span>
+            <div class="flex-grow flex items-center justify-between text-xs text-stone-300 group-hover:text-stone-500 font-medium select-none">
+              <span>Empty Slot</span>
+              <span class="opacity-0 group-hover:opacity-100 text-[10px] bg-stone-100 px-2 py-0.5 rounded text-stone-600 transition">Place +</span>
+            </div>
+          `;
+          gridEl.appendChild(emptySlot);
+        }
+      });
+    }
+
+    // --- DRAG & DROP BUSINESS LOGIC ---
+    // --- STREAMING_CHUNK: Managing Drag and Drop Events & Dynamic Highlighting ---
+    function handleDragStart(e, id, fromCalendar) {
+      currentlyDraggingId = id;
+      isDraggingFromCalendar = fromCalendar;
+      
+      // Classy feedback styling
+      e.target.style.opacity = '0.4';
+      
+      // Store ID explicitly for cross-browser reliability
+      e.dataTransfer.setData('text/plain', id);
+      e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function handleDragEnd(e) {
+      e.target.style.opacity = '1';
+      currentlyDraggingId = null;
+      isDraggingFromCalendar = false;
+      clearDragOverHighlights();
+    }
+
+    function handleDragOver(e, dateStr, hour) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      
+      clearDragOverHighlights();
+
+      // Find dragging activity specs
+      let duration = 1;
+      if (isDraggingFromCalendar) {
+        const sItem = state.schedule.find(item => item.id === currentlyDraggingId);
+        if (sItem) {
+          const act = state.activities.find(a => a.id === sItem.activityId);
+          if (act) duration = act.duration;
+        }
+      } else if (currentlyDraggingId) {
+        const act = state.activities.find(a => a.id === currentlyDraggingId);
+        if (act) duration = act.duration;
+      }
+
+      // Highlight target slots spanned by the activity duration
+      for (let i = 0; i < duration; i++) {
+        const targetHour = parseInt(hour) + i;
+        if (targetHour <= DAY_END_HOUR) {
+          const slot = document.querySelector(`[data-date="${dateStr}"][data-hour="${targetHour}"]`);
+          if (slot) {
+            slot.classList.add('slot-drag-hover');
+          }
+        }
+      }
+    }
+
+    function handleDragLeave(e) {
+      e.preventDefault();
+    }
+
+    function clearDragOverHighlights() {
+      document.querySelectorAll('.slot-drag-hover').forEach(el => {
+        el.classList.remove('slot-drag-hover');
+      });
+    }
+
+    // Handle dropping an activity onto an hourly schedule slot
+    function handleDrop(e, dateStr, hour) {
+      e.preventDefault();
+      clearDragOverHighlights();
+      
+      const id = e.dataTransfer.getData('text/plain') || currentlyDraggingId;
+      if (!id) return;
+
+      const targetHour = parseInt(hour);
+      scheduleActivity(id, dateStr, targetHour, isDraggingFromCalendar);
+    }
+
+    // Drop to the Pool means unscheduling an activity (bringing it back to the pool)
+    function handlePoolDrop(e) {
+      e.preventDefault();
+      const id = e.dataTransfer.getData('text/plain') || currentlyDraggingId;
+      if (id && isDraggingFromCalendar) {
+        unscheduleItem(id);
+      }
+    }
+
+    function allowDrop(e) {
+      e.preventDefault();
+    }
+
+    // --- CORE SCHEDULING LOGIC ---
+    // --- STREAMING_CHUNK: Processing Calendar Placement and Collision Validations ---
+    function scheduleActivity(entityId, dateStr, hour, isRescheduling) {
+      let activity = null;
+      let existingScheduleId = null;
+
+      if (isRescheduling) {
+        const scheduleItem = state.schedule.find(item => item.id === entityId);
+        if (scheduleItem) {
+          activity = state.activities.find(a => a.id === scheduleItem.activityId);
+          existingScheduleId = scheduleItem.id;
+        }
+      } else {
+        activity = state.activities.find(a => a.id === entityId);
+      }
+
+      if (!activity) return;
+
+      // Validate bounds: Must fit inside the hour block range
+      const endHourOfActivity = hour + activity.duration;
+      if (endHourOfActivity > (DAY_END_HOUR + 1)) {
+        showToast("⚠️ Activity exceeds daytime hours (ends after 10:00 PM)!", "rose");
+        return;
+      }
+
+      // Check for scheduling overlaps
+      for (let h = hour; h < endHourOfActivity; h++) {
+        const occupied = getScheduledItemAt(dateStr, h);
+        
+        // If conflict is found and is not with itself during rescheduling
+        if (occupied && occupied.id !== existingScheduleId) {
+          showToast("⚠️ Time conflict detected. Please clear or reschedule conflicting plans first.", "rose");
+          return;
+        }
+      }
+
+      // Perform scheduled record operation
+      if (isRescheduling) {
+        // Update existing record
+        const item = state.schedule.find(s => s.id === existingScheduleId);
+        if (item) {
+          item.dateStr = dateStr;
+          item.startHour = hour;
+        }
+      } else {
+        // Create new record
+        state.schedule.push({
+          id: generateUUID(),
+          activityId: activity.id,
+          dateStr: dateStr,
+          startHour: hour
+        });
+      }
+
+      showToast("✓ Schedule updated successfully", "emerald");
+      renderAll();
+    }
+
+    // Remove an item from the calendar schedule (returns to activities pool)
+    function unscheduleItem(scheduleId) {
+      state.schedule = state.schedule.filter(s => s.id !== scheduleId);
+      showToast("Moved back to Ideas Pool", "emerald");
+      renderAll();
+    }
+
+    // --- TAP-TO-PLACE WORKFLOW (MOBILE / MULTI-TOUCH ASSIST) ---
+    // --- STREAMING_CHUNK: Configuring Assistive Tap-to-Place Operations ---
+    function triggerPlacementMode(activityId) {
+      const act = state.activities.find(a => a.id === activityId);
+      if (!act) return;
+
+      activePlacementId = activityId;
+      
+      const banner = document.getElementById('placement-banner');
+      const bannerText = document.getElementById('placement-banner-text');
+      
+      bannerText.innerHTML = `Placing: <strong class="text-stone-900">${escapeHTML(act.name)}</strong>. Tap on any free hourly slot on the calendar grid to schedule.`;
+      banner.classList.remove('hidden');
+      
+      // Update UI highlights
+      renderActivityPool();
+    }
+
+    function cancelPlacement() {
+      activePlacementId = null;
+      document.getElementById('placement-banner').classList.add('hidden');
+      renderActivityPool();
+    }
+
+    function handleSlotClick(dateStr, hour) {
+      if (activePlacementId) {
+        scheduleActivity(activePlacementId, dateStr, parseInt(hour), false);
+        cancelPlacement();
+      }
+    }
+
+    // --- ACTIVITY UTILITY METHODS ---
+    function getScheduledItemAt(dateStr, hour) {
+      return state.schedule.find(item => {
+        if (item.dateStr !== dateStr) return false;
+        const act = state.activities.find(a => a.id === item.activityId);
+        if (!act) return false;
+        
+        return hour >= item.startHour && hour < (item.startHour + act.duration);
+      });
+    }
+
+    // --- MODAL & FORM CONTROL FUNCTIONS ---
+    // --- STREAMING_CHUNK: Setting Up Form Operations & Toggle States ---
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      modal.classList.remove('hidden');
+      
+      if (id === 'dates-modal') {
+        document.getElementById('start-date-input').value = state.startDate;
+        document.getElementById('end-date-input').value = state.endDate;
+        document.getElementById('date-validation-error').classList.add('hidden');
+      } else if (id === 'activity-modal') {
+        // Reset Creator Form fields
+        document.getElementById('activity-modal-title').textContent = "Create Activity";
+        document.getElementById('edit-activity-id').value = "";
+        document.getElementById('act-name-input').value = "";
+        document.getElementById('act-duration-input').value = "1";
+        document.getElementById('act-color-input').value = "sightseeing";
+        document.getElementById('act-notes-input').value = "";
+        document.getElementById('act-name-error').classList.add('hidden');
+      } else if (id === 'trip-name-modal') {
+        document.getElementById('trip-name-input').value = state.tripName || "";
+      } else if (id === 'import-modal') {
+        document.getElementById('import-file-input').value = "";
+        document.getElementById('import-text-input').value = "";
+        document.getElementById('import-error-msg').classList.add('hidden');
+      }
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    // Apply Trip Name adjustment
+    function applyTripName() {
+      const input = document.getElementById('trip-name-input').value.trim();
+      state.tripName = input || "Voyageur Itinerary";
+      closeModal('trip-name-modal');
+      showToast("✓ Trip name updated", "emerald");
+      renderAll();
+    }
+
+    // Export Plan (JSON Download)
+    function exportItinerary() {
+      try {
+        const jsonStr = JSON.stringify(state, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(jsonStr);
+        
+        const exportFileDefaultName = `${(state.tripName || 'itinerary').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.json`;
+        
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+        
+        showToast("✓ Itinerary exported as JSON!", "emerald");
+      } catch (err) {
+        showToast("✕ Failed to export itinerary data.", "rose");
+      }
+    }
+
+    // --- STREAMING_CHUNK: Managing Itinerary JSON Importers ---
+    // Handle Itinerary Import Action (Supports file or pasted text)
+    function handleImport() {
+      const fileInput = document.getElementById('import-file-input');
+      const textInput = document.getElementById('import-text-input').value.trim();
+      const errorMsg = document.getElementById('import-error-msg');
+
+      const processJson = (rawText) => {
+        try {
+          const parsed = JSON.parse(rawText);
+          
+          // Verify required fields exist
+          if (!parsed.startDate || !parsed.endDate || !Array.isArray(parsed.activities) || !Array.isArray(parsed.schedule)) {
+            throw new Error("Missing required fields");
+          }
+          
+          state = {
+            tripName: parsed.tripName || "Voyageur Itinerary",
+            startDate: parsed.startDate,
+            endDate: parsed.endDate,
+            activities: parsed.activities,
+            schedule: parsed.schedule
+          };
+
+          validateScheduleIntegrity();
+          saveItinerary();
+          renderAll();
+          closeModal('import-modal');
+          showToast("✓ Itinerary imported successfully!", "emerald");
+        } catch (e) {
+          errorMsg.classList.remove('hidden');
+        }
+      };
+
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          processJson(event.target.result);
+        };
+        reader.readAsText(file);
+      } else if (textInput) {
+        processJson(textInput);
+      } else {
+        showToast("⚠️ Please provide a file or paste JSON data.", "rose");
+      }
+    }
+
+    // Apply Trip Date adjustments
+    function applyDates() {
+      const startVal = document.getElementById('start-date-input').value;
+      const endVal = document.getElementById('end-date-input').value;
+
+      if (!startVal || !endVal) {
+        showToast("⚠️ Set both valid start and end dates.", "rose");
+        return;
+      }
+
+      const start = new Date(startVal);
+      const end = new Date(endVal);
+
+      if (end < start) {
+        document.getElementById('date-validation-error').classList.remove('hidden');
+        return;
+      }
+
+      // Check length limits for styling integrity (restrict to max 30 days to avoid UI strain)
+      const diffTime = Math.abs(end - start);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      if (diffDays > 30) {
+        showToast("⚠️ Voyageur currently supports planning trips up to 30 days.", "rose");
+        return;
+      }
+
+      state.startDate = startVal;
+      state.endDate = endVal;
+
+      // Clean activities falling outside new date limits
+      validateScheduleIntegrity();
+
+      closeModal('dates-modal');
+      showToast("✓ Trip dates updated", "emerald");
+      renderAll();
+    }
+
+    // --- STREAMING_CHUNK: Processing Template Updates and Reschedules ---
+    // Save/Update Activity from Creator Modal
+    function saveActivity() {
+      const id = document.getElementById('edit-activity-id').value;
+      const name = document.getElementById('act-name-input').value.trim();
+      const duration = parseInt(document.getElementById('act-duration-input').value);
+      const color = document.getElementById('act-color-input').value;
+      const notes = document.getElementById('act-notes-input').value.trim();
+
+      if (!name) {
+        document.getElementById('act-name-error').classList.remove('hidden');
+        return;
+      }
+
+      if (id) {
+        // Update existing item template
+        const act = state.activities.find(a => a.id === id);
+        if (act) {
+          act.name = name;
+          act.duration = duration;
+          act.color = color;
+          act.notes = notes;
+        }
+        showToast("✓ Activity updated", "emerald");
+      } else {
+        // Create new card
+        state.activities.push({
+          id: generateUUID(),
+          name,
+          duration,
+          color,
+          notes
+        });
+        showToast("✓ Activity created", "emerald");
+      }
+
+      // Reschedule bounds evaluation in case duration changes
+      validateScheduleIntegrity();
+
+      closeModal('activity-modal');
+      renderAll();
+    }
+
+    // Open activity modal ready with pre-filled content to edit
+    function openEditActivity(id) {
+      const act = state.activities.find(a => a.id === id);
+      if (!act) return;
+
+      openModal('activity-modal');
+      document.getElementById('activity-modal-title').textContent = "Edit Activity";
+      document.getElementById('edit-activity-id').value = act.id;
+      document.getElementById('act-name-input').value = act.name;
+      document.getElementById('act-duration-input').value = act.duration;
+      document.getElementById('act-color-input').value = act.color;
+      document.getElementById('act-notes-input').value = act.notes;
+    }
+
+    // Delete activity template & clean related schedules
+    function deleteActivity(id) {
+      // Trigger deletion confirm dialog box rather than generic prompt window
+      openConfirmDialog(
+        "Delete Activity?",
+        "Are you sure you want to delete this activity? It will also remove all scheduled placements on your calendar itinerary.",
+        "Delete",
+        () => {
+          state.activities = state.activities.filter(a => a.id !== id);
+          validateScheduleIntegrity();
+          closeModal('confirm-modal');
+          showToast("Activity deleted", "emerald");
+          renderAll();
+        }
+      );
+    }
+
+    // --- STATE CONFIGURATION OPERATIONS (SAVE / LOAD / RESET) ---
+    // --- STREAMING_CHUNK: Writing to Local Storage memory files ---
+    function saveItinerary() {
+      try {
+        localStorage.setItem('voyageur_planner_state', JSON.stringify(state));
+        showToast("✓ Plan saved successfully!", "emerald");
+      } catch (err) {
+        showToast("⚠️ Could not write configurations to local memory storage.", "rose");
+      }
+    }
+
+    function confirmReset() {
+      openConfirmDialog(
+        "Reset Itinerary Planning Map?",
+        "This action resets your dates to a default 5-day trip format and completely clears custom activities. Would you like to proceed?",
+        "Reset Plan",
+        () => {
+          loadDefaultState();
+          closeModal('confirm-modal');
+          showToast("✓ Planner reset to default configuration template.", "emerald");
+          renderAll();
+        }
+      );
+    }
+
+    function openConfirmDialog(title, desc, actionText, actionCallback) {
+      document.getElementById('confirm-modal-title').textContent = title;
+      document.getElementById('confirm-modal-description').textContent = desc;
+      
+      const actBtn = document.getElementById('confirm-modal-action-btn');
+      actBtn.textContent = actionText;
+      
+      // Clear previous event listeners safely
+      const clone = actBtn.cloneNode(true);
+      actBtn.parentNode.replaceChild(clone, actBtn);
+      
+      clone.addEventListener('click', actionCallback);
+      openModal('confirm-modal');
+    }
+
+    // --- GENERAL DATE & MATH UTILITY HELPERS ---
+    // --- STREAMING_CHUNK: Processing Calendaring Date Bounds Math ---
+    function getDaysRange() {
+      const days = [];
+      const start = new Date(state.startDate);
+      const end = new Date(state.endDate);
+
+      // Guard boundaries check
+      if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) {
+        return [];
+      }
+
+      const tempDate = new Date(start);
+      const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+      while (tempDate <= end) {
+        const dateStr = formatDate(tempDate);
+        days.push({
+          dateStr: dateStr,
+          dayName: weekdays[tempDate.getDay()],
+          formattedDate: `${months[tempDate.getMonth()]} ${tempDate.getDate()}`
+        });
+        tempDate.setDate(tempDate.getDate() + 1);
+      }
+
+      return days;
+    }
+
+    function formatDate(dateObj) {
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function parseAndFormatDate(dateString) {
+      if (!dateString) return "";
+      const parts = dateString.split('-');
+      if (parts.length !== 3) return dateString;
+      const date = new Date(parts[0], parts[1] - 1, parts[2]);
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+    }
+
+    function formatHourLabel(hour) {
+      const isPm = hour >= 12;
+      const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+      const suffix = isPm ? "PM" : "AM";
+      return `${String(displayHour).padStart(2, '0')}:00 ${suffix}`;
+    }
+
+    // Secure generation of distinct IDs
+    function generateUUID() {
+      return 'id-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now().toString(36);
+    }
+
+    function escapeHTML(str) {
+      if (!str) return '';
+      return str.replace(/[&<>'"]/g, 
+        tag => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          "'": '&#39;',
+          '"': '&quot;'
+        }[tag] || tag)
+      );
+    }
+
+    // Smart notification visual toast banner helper
+    function showToast(message, type = "emerald") {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-message');
+      const toastIcon = document.getElementById('toast-icon');
+
+      toastMsg.textContent = message;
+
+      if (type === "rose") {
+        toastIcon.textContent = "✕";
+        toastIcon.className = "text-rose-400 font-bold";
+      } else {
+        toastIcon.textContent = "✓";
+        toastIcon.className = "text-emerald-400 font-bold";
+      }
+
+      toast.className = "opacity-100 translate-y-0 fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-stone-900 text-white px-5 py-3.5 rounded-xl shadow-lg transition-all duration-300";
+
+      // Self fade out dismiss
+      setTimeout(() => {
+        toast.className = "opacity-0 translate-y-4 pointer-events-none fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-stone-900 text-white px-5 py-3.5 rounded-xl shadow-lg transition-all duration-300";
+      }, 3500);
+    }
+  </script>
+</body>
+</html>
